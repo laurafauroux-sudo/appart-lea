@@ -19,8 +19,93 @@
     header h1 { font-size: 1.8em; }
     header p { opacity: 0.85; margin-top: 5px; }
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .main-layout {
+      display: flex;
+      min-height: calc(100vh - 80px);
+    }
 
+    /* PANNEAU FILTRES */
+    .filter-panel {
+      width: 260px;
+      min-width: 260px;
+      background: white;
+      padding: 20px;
+      box-shadow: 2px 0 15px rgba(155,89,182,0.1);
+      overflow-y: auto;
+    }
+    .filter-panel h2 {
+      color: #9b59b6;
+      margin-bottom: 20px;
+      font-size: 1.1em;
+      border-bottom: 2px solid #f0e6ff;
+      padding-bottom: 10px;
+    }
+    .filter-section { margin-bottom: 22px; }
+    .filter-section > label {
+      display: block;
+      color: #666;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .slider-values {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8em;
+      color: #9b59b6;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #9b59b6;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+    .arrondissements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .arrondissement-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88em;
+      color: #555;
+      cursor: pointer;
+    }
+    .arrondissement-item input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #9b59b6;
+      border: none;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .btn-reset {
+      background: #f0e6ff;
+      color: #9b59b6;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.9em;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-reset:hover { background: #e0ccff; }
+
+    /* CONTENU */
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
     .form-card {
       background: white;
       border-radius: 16px;
@@ -35,7 +120,8 @@
       gap: 12px;
     }
     .form-grid .full { grid-column: 1 / -1; }
-    input, select, textarea {
+    .form-grid label { display: block; margin-bottom: 4px; color: #666; font-size: 0.85em; font-weight: 600; }
+    input[type="url"], input[type="text"], input[type="number"], select, textarea {
       width: 100%;
       padding: 10px 14px;
       border: 2px solid #e8d5f5;
@@ -44,9 +130,9 @@
       outline: none;
       transition: border 0.2s;
     }
-    input:focus, select:focus, textarea:focus { border-color: #9b59b6; }
-    label { display: block; margin-bottom: 4px; color: #666; font-size: 0.85em; font-weight: 600; }
-    
+    input[type="url"]:focus, input[type="text"]:focus,
+    input[type="number"]:focus, select:focus, textarea:focus { border-color: #9b59b6; }
+
     .btn {
       background: linear-gradient(135deg, #9b59b6, #e91e8c);
       color: white;
@@ -62,32 +148,33 @@
     .btn:hover { opacity: 0.9; }
 
     #map {
-      height: 500px;
+      height: 450px;
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(155,89,182,0.15);
-      margin-bottom: 25px;
     }
 
-    /* Légende carte */
-    .map-legend {
-      background: white;
-      border-radius: 12px;
-      padding: 12px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    /* LÉGENDE */
+    .legende {
       display: flex;
-      gap: 20px;
+      gap: 15px;
       align-items: center;
       flex-wrap: wrap;
+      background: white;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-top: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-size: 0.82em;
+      color: #666;
     }
-    .map-legend span { font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px; }
-    .legend-dot {
-      display: inline-block;
+    .legende-item { display: flex; align-items: center; gap: 6px; }
+    .legende-dot {
       border-radius: 50%;
-      border: 2px solid rgba(0,0,0,0.2);
+      display: inline-block;
+      border: 2px solid rgba(0,0,0,0.15);
     }
 
-    .apt-list { margin-top: 25px; display: grid; gap: 12px; }
+    .apt-list { margin-top: 20px; display: grid; gap: 12px; }
     .apt-card {
       background: white;
       border-radius: 12px;
@@ -99,8 +186,17 @@
     }
     .apt-card h3 { color: #9b59b6; margin-bottom: 4px; }
     .apt-card .price { color: #e91e8c; font-weight: bold; }
-    .apt-card .details { color: #888; font-size: 0.85em; }
+    .apt-card .details { color: #888; font-size: 0.85em; margin-top: 2px; }
     .apt-card a { color: #9b59b6; font-size: 0.85em; }
+    .note-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
+      color: white;
+      margin-left: 6px;
+    }
     .delete-btn {
       background: none;
       border: none;
@@ -108,19 +204,19 @@
       font-size: 1.2em;
       color: #ccc;
       transition: color 0.2s;
+      flex-shrink: 0;
+      margin-left: 10px;
     }
     .delete-btn:hover { color: #e74c3c; }
-
-    .note-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 0.85em;
-      color: white;
+    .no-results {
+      text-align: center;
+      color: #aaa;
+      padding: 30px;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 700px) {
+      .main-layout { flex-direction: column; }
+      .filter-panel { width: 100%; min-width: unset; }
       .form-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -132,70 +228,153 @@
   <p id="subtitle">Chargement...</p>
 </header>
 
-<div class="container">
-  <div class="form-card">
-    <h2>➕ Ajouter un appartement</h2>
-    <div class="form-grid">
-      <div class="full">
-        <label>🔗 Lien de l'annonce</label>
-        <input type="url" id="lien" placeholder="https://www.seloger.com/...">
+<div class="main-layout">
+
+  <!-- FILTRES -->
+  <div class="filter-panel">
+    <h2>🔍 Filtres</h2>
+
+    <div class="filter-section">
+      <label>💶 Prix max</label>
+      <div class="slider-values">
+        <span>500€</span>
+        <span id="prix-value">1500€</span>
       </div>
-      <div>
-        <label>📍 Quartier / Adresse</label>
-        <input type="text" id="quartier" placeholder="Noailles, Castellane...">
+      <input type="range" id="filter-prix" min="500" max="1500" step="25" value="1500"
+             oninput="updateSlider('prix'); applyFilters()">
+    </div>
+
+    <div class="filter-section">
+      <label>📐 Surface min</label>
+      <div class="slider-values">
+        <span>10m²</span>
+        <span id="surface-value">10m²</span>
       </div>
-      <div>
-        <label>💶 Loyer (€/mois)</label>
-        <input type="number" id="prix" placeholder="750">
+      <input type="range" id="filter-surface" min="10" max="80" step="5" value="10"
+             oninput="updateSlider('surface'); applyFilters()">
+    </div>
+
+    <div class="filter-section">
+      <label>⭐ Note min (sur 10)</label>
+      <div class="slider-values">
+        <span>1</span>
+        <span id="note-value">1 / 10</span>
       </div>
-      <div>
-        <label>📐 Surface (m²)</label>
-        <input type="number" id="surface" placeholder="35">
-      </div>
-      <div>
-        <label>🏠 Type</label>
-        <select id="type">
-          <option>Studio</option>
-          <option>T1</option>
-          <option>T2</option>
-          <option>T3</option>
-        </select>
-      </div>
-      <div>
-        <label>⭐ Note (1 à 10)</label>
-        <select id="note">
-          <option value="10">10 — Coup de cœur absolu 🤩</option>
-          <option value="9">9 — Excellent 😍</option>
-          <option value="8">8 — Très bien 😊</option>
-          <option value="7">7 — Bien 🙂</option>
-          <option value="6" selected>6 — Correct 😐</option>
-          <option value="5">5 — Moyen 😑</option>
-          <option value="4">4 — Pas top 😕</option>
-          <option value="3">3 — Bof 😟</option>
-          <option value="2">2 — Mauvais 😞</option>
-          <option value="1">1 — À éviter 🚫</option>
-        </select>
-      </div>
-      <div class="full">
-        <label>💬 Remarques</label>
-        <textarea id="remarques" rows="2" placeholder="Lumineux, proche métro..."></textarea>
+      <input type="range" id="filter-note" min="1" max="10" step="1" value="1"
+             oninput="updateSlider('note'); applyFilters()">
+    </div>
+
+    <div class="filter-section">
+      <label>📍 Arrondissements</label>
+      <div class="arrondissements-list" id="arrondissements-list">
+        <div style="color:#bbb; font-size:0.85em">Aucun appart ajouté</div>
       </div>
     </div>
-    <button class="btn" onclick="addApartment()">📍 Ajouter sur la carte</button>
+
+    <button class="btn-reset" onclick="resetFilters()">🔄 Réinitialiser</button>
   </div>
 
-  <div id="map"></div>
+  <!-- CONTENU -->
+  <div class="content">
 
-  <!-- Légende -->
-  <div class="map-legend">
-    <strong style="color:#666">Légende :</strong>
-    <span><span class="legend-dot" style="width:12px;height:12px;background:#e74c3c"></span> 1-3 (Bof)</span>
-    <span><span class="legend-dot" style="width:16px;height:16px;background:#e67e22"></span> 4-6 (Moyen)</span>
-    <span><span class="legend-dot" style="width:20px;height:20px;background:#2ecc71"></span> 7-10 (Bien)</span>
-    <span style="color:#aaa;font-size:0.8em">• La taille du cercle reflète la note</span>
+    <!-- FORMULAIRE -->
+    <div class="form-card">
+      <h2>➕ Ajouter un appartement</h2>
+      <div class="form-grid">
+        <div class="full">
+          <label>🔗 Lien de l'annonce</label>
+          <input type="url" id="lien" placeholder="https://www.seloger.com/...">
+        </div>
+        <div>
+          <label>📍 Quartier / Adresse</label>
+          <input type="text" id="quartier" placeholder="Le Panier, Noailles...">
+        </div>
+        <div>
+          <label>💶 Loyer (€/mois)</label>
+          <input type="number" id="prix" placeholder="700">
+        </div>
+        <div>
+          <label>📐 Surface (m²)</label>
+          <input type="number" id="surface" placeholder="35">
+        </div>
+        <div>
+          <label>🏠 Type</label>
+          <select id="type">
+            <option>Studio</option>
+            <option>T1</option>
+            <option>T2</option>
+            <option>T3</option>
+          </select>
+        </div>
+        <div>
+          <label>⭐ Note (1 à 10)</label>
+          <select id="note">
+            <option value="10">10 — Coup de cœur absolu 💚</option>
+            <option value="9">9 — Excellent</option>
+            <option value="8">8 — Très bien</option>
+            <option value="7">7 — Bien</option>
+            <option value="6" selected>6 — Plutôt bien</option>
+            <option value="5">5 — Moyen</option>
+            <option value="4">4 — Pas terrible</option>
+            <option value="3">3 — Bof</option>
+            <option value="2">2 — Mauvais</option>
+            <option value="1">1 — À éviter 🔴</option>
+          </select>
+        </div>
+        <div class="full">
+          <label>🏘️ Arrondissement Marseille</label>
+          <select id="arrondissement">
+            <option value="">-- Sélectionner --</option>
+            <option value="1er">1er arrondissement</option>
+            <option value="2ème">2ème arrondissement</option>
+            <option value="3ème">3ème arrondissement</option>
+            <option value="4ème">4ème arrondissement</option>
+            <option value="5ème">5ème arrondissement</option>
+            <option value="6ème">6ème arrondissement</option>
+            <option value="7ème">7ème arrondissement</option>
+            <option value="8ème">8ème arrondissement</option>
+            <option value="9ème">9ème arrondissement</option>
+            <option value="10ème">10ème arrondissement</option>
+            <option value="11ème">11ème arrondissement</option>
+            <option value="12ème">12ème arrondissement</option>
+            <option value="13ème">13ème arrondissement</option>
+            <option value="14ème">14ème arrondissement</option>
+            <option value="15ème">15ème arrondissement</option>
+            <option value="16ème">16ème arrondissement</option>
+          </select>
+        </div>
+        <div class="full">
+          <label>💬 Remarques</label>
+          <textarea id="remarques" rows="2" placeholder="Lumineux, proche métro..."></textarea>
+        </div>
+      </div>
+      <button class="btn" onclick="addApartment()">📍 Ajouter sur la carte</button>
+    </div>
+
+    <!-- CARTE -->
+    <div id="map"></div>
+
+    <!-- LÉGENDE -->
+    <div class="legende">
+      <strong>Légende :</strong>
+      <div class="legende-item">
+        <span class="legende-dot" style="width:10px;height:10px;background:#e74c3c"></span> Note 1-3
+      </div>
+      <div class="legende-item">
+        <span class="legende-dot" style="width:14px;height:14px;background:#e67e22"></span> Note 4-5
+      </div>
+      <div class="legende-item">
+        <span class="legende-dot" style="width:17px;height:17px;background:#f1c40f"></span> Note 6-7
+      </div>
+      <div class="legende-item">
+        <span class="legende-dot" style="width:20px;height:20px;background:#2ecc71"></span> Note 8-10
+      </div>
+    </div>
+
+    <!-- LISTE -->
+    <div class="apt-list" id="apt-list"></div>
+
   </div>
-
-  <div class="apt-list" id="apt-list"></div>
 </div>
 
 <script type="module">
@@ -222,93 +401,171 @@
   }).addTo(map);
 
   const markers = {};
+  let allApartments = [];
 
-  // Couleur et taille selon note /10
-  function getNoteStyle(note) {
-    if (note >= 7) return { color: '#2ecc71', size: 10 + (note - 6) * 3 }; // 13 à 22px
-    if (note >= 4) return { color: '#e67e22', size: 8 + (note - 3) * 2 };  // 10 à 14px
-    return { color: '#e74c3c', size: 6 + note * 1 };                        // 7 à 9px
+  // Couleur et taille du pin selon la note /10
+  function getPinStyle(note) {
+    if (note >= 8) return { color: '#2ecc71', size: 22 };      // vert grand
+    if (note >= 6) return { color: '#f1c40f', size: 17 };      // jaune moyen
+    if (note >= 4) return { color: '#e67e22', size: 13 };      // orange petit
+    return          { color: '#e74c3c', size: 10 };             // rouge très petit
   }
 
-  function createNoteIcon(note) {
-    const { color, size } = getNoteStyle(note);
-    const total = size * 2 + 4;
+  function createPinIcon(note) {
+    const { color, size } = getPinStyle(note);
     return L.divIcon({
       className: '',
       html: `<div style="
-        width:${total}px;
-        height:${total}px;
+        width:${size}px;
+        height:${size}px;
         background:${color};
         border-radius:50%;
-        border:3px solid white;
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        color:white;
-        font-weight:bold;
-        font-size:${Math.max(9, size - 2)}px;
-      ">${note}</div>`,
-      iconSize: [total, total],
-      iconAnchor: [total/2, total/2]
+        border:2px solid rgba(0,0,0,0.25);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      "></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
     });
   }
 
   function getNoteColor(note) {
-    if (note >= 7) return '#2ecc71';
+    if (note >= 8) return '#2ecc71';
+    if (note >= 6) return '#f1c40f';
     if (note >= 4) return '#e67e22';
     return '#e74c3c';
   }
 
+  // Écoute Firebase
   onValue(ref(db, 'appartements'), (snapshot) => {
     const data = snapshot.val();
-    
-    Object.values(markers).forEach(m => map.removeLayer(m));
-    Object.keys(markers).forEach(k => delete markers[k]);
-    document.getElementById('apt-list').innerHTML = '';
+    allApartments = data
+      ? Object.entries(data).map(([id, apt]) => ({ id, ...apt }))
+      : [];
+    updateArrondissementsList();
+    applyFilters();
+  });
 
-    if (!data) {
-      document.getElementById('subtitle').textContent = '0 appartement • Marseille';
+  function updateArrondissementsList() {
+    const arrondissements = [...new Set(
+      allApartments.map(a => a.arrondissement).filter(Boolean)
+    )].sort();
+
+    const list = document.getElementById('arrondissements-list');
+    if (arrondissements.length === 0) {
+      list.innerHTML = '<div style="color:#bbb; font-size:0.85em">Aucun appart ajouté</div>';
       return;
     }
+    const currentChecked = getCheckedArrondissements();
+    list.innerHTML = arrondissements.map(arr => `
+      <label class="arrondissement-item">
+        <input type="checkbox" value="${arr}"
+               ${currentChecked.length === 0 || currentChecked.includes(arr) ? 'checked' : ''}
+               onchange="applyFilters()">
+        ${arr}
+      </label>
+    `).join('');
+  }
 
-    const apts = Object.entries(data);
-    document.getElementById('subtitle').textContent = `${apts.length} appartement${apts.length > 1 ? 's' : ''} • Marseille`;
+  function getCheckedArrondissements() {
+    return [...document.querySelectorAll('#arrondissements-list input:checked')]
+      .map(cb => cb.value);
+  }
 
-    apts.forEach(([id, apt]) => {
-      const note = apt.note || 5;
-      const noteColor = getNoteColor(note);
+  window.applyFilters = function() {
+    const maxPrix    = parseInt(document.getElementById('filter-prix').value);
+    const minSurface = parseInt(document.getElementById('filter-surface').value);
+    const minNote    = parseInt(document.getElementById('filter-note').value);
+    const checkedArr = getCheckedArrondissements();
 
+    const filtered = allApartments.filter(apt => {
+      if (apt.prix > maxPrix) return false;
+      if (apt.surface < minSurface) return false;
+      if ((apt.note || 0) < minNote) return false;
+      if (checkedArr.length > 0 && apt.arrondissement && !checkedArr.includes(apt.arrondissement)) return false;
+      return true;
+    });
+
+    renderMap(filtered);
+    renderList(filtered);
+
+    document.getElementById('subtitle').textContent =
+      `${filtered.length} / ${allApartments.length} appartement${allApartments.length > 1 ? 's' : ''} • Marseille`;
+  };
+
+  function renderMap(apartments) {
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    Object.keys(markers).forEach(k => delete markers[k]);
+
+    apartments.forEach(apt => {
       if (apt.lat && apt.lng) {
-        const marker = L.marker([apt.lat, apt.lng], { icon: createNoteIcon(note) })
+        const note = apt.note || 5;
+        const icon = createPinIcon(note);
+        const marker = L.marker([apt.lat, apt.lng], { icon })
           .addTo(map)
           .bindPopup(`
             <div style="min-width:200px">
-              <strong style="color:#9b59b6">${apt.quartier}</strong><br>
+              <strong style="color:#9b59b6">${apt.quartier}</strong>
+              ${apt.arrondissement ? ` <span style="color:#aaa;font-size:0.85em">(${apt.arrondissement})</span>` : ''}<br>
               <span style="color:#e91e8c;font-weight:bold">${apt.prix}€/mois</span> — ${apt.surface}m² — ${apt.type}<br>
-              <span style="background:${noteColor};color:white;padding:2px 8px;border-radius:20px;font-weight:bold;font-size:0.9em">Note : ${note}/10</span><br><br>
+              <span style="background:${getNoteColor(note)};color:white;padding:2px 8px;border-radius:10px;font-size:0.85em;font-weight:bold">
+                ⭐ ${note}/10
+              </span><br><br>
               ${apt.remarques ? `<em>${apt.remarques}</em><br>` : ''}
               ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
             </div>
           `);
-        markers[id] = marker;
+        markers[apt.id] = marker;
       }
+    });
+  }
 
+  function renderList(apartments) {
+    const list = document.getElementById('apt-list');
+    list.innerHTML = '';
+
+    if (apartments.length === 0) {
+      list.innerHTML = '<div class="no-results">😕 Aucun appartement ne correspond aux filtres</div>';
+      return;
+    }
+
+    apartments.forEach(apt => {
+      const note = apt.note || 5;
+      const color = getNoteColor(note);
       const card = document.createElement('div');
       card.className = 'apt-card';
       card.innerHTML = `
         <div>
-          <h3>${apt.quartier} — ${apt.type}</h3>
+          <h3>
+            ${apt.quartier} — ${apt.type}
+            <span class="note-badge" style="background:${color}">⭐ ${note}/10</span>
+          </h3>
           <div class="price">${apt.prix}€/mois</div>
-          <div class="details">${apt.surface}m² • <span class="note-badge" style="background:${noteColor}">${note}/10</span></div>
+          <div class="details">${apt.surface}m²${apt.arrondissement ? ` • 📍 ${apt.arrondissement}` : ''}</div>
           ${apt.remarques ? `<div class="details">${apt.remarques}</div>` : ''}
           ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
         </div>
-        <button class="delete-btn" onclick="window.deleteApt('${id}')">🗑️</button>
+        <button class="delete-btn" onclick="window.deleteApt('${apt.id}')">🗑️</button>
       `;
-      document.getElementById('apt-list').appendChild(card);
+      list.appendChild(card);
     });
-  });
+  }
+
+  window.updateSlider = function(type) {
+    if (type === 'prix')    document.getElementById('prix-value').textContent    = document.getElementById('filter-prix').value + '€';
+    if (type === 'surface') document.getElementById('surface-value').textContent = document.getElementById('filter-surface').value + 'm²';
+    if (type === 'note')    document.getElementById('note-value').textContent    = document.getElementById('filter-note').value + ' / 10';
+  };
+
+  window.resetFilters = function() {
+    document.getElementById('filter-prix').value = 1500;
+    document.getElementById('filter-surface').value = 10;
+    document.getElementById('filter-note').value = 1;
+    document.getElementById('prix-value').textContent = '1500€';
+    document.getElementById('surface-value').textContent = '10m²';
+    document.getElementById('note-value').textContent = '1 / 10';
+    document.querySelectorAll('#arrondissements-list input').forEach(cb => cb.checked = true);
+    applyFilters();
+  };
 
   async function geocode(quartier) {
     const q = encodeURIComponent(quartier + ', Marseille, France');
@@ -319,13 +576,14 @@
   }
 
   window.addApartment = async function() {
-    const quartier = document.getElementById('quartier').value.trim();
-    const prix = document.getElementById('prix').value;
-    const surface = document.getElementById('surface').value;
-    const type = document.getElementById('type').value;
-    const note = document.getElementById('note').value;
-    const remarques = document.getElementById('remarques').value.trim();
-    const lien = document.getElementById('lien').value.trim();
+    const quartier      = document.getElementById('quartier').value.trim();
+    const prix          = document.getElementById('prix').value;
+    const surface       = document.getElementById('surface').value;
+    const type          = document.getElementById('type').value;
+    const note          = document.getElementById('note').value;
+    const remarques     = document.getElementById('remarques').value.trim();
+    const lien          = document.getElementById('lien').value.trim();
+    const arrondissement = document.getElementById('arrondissement').value;
 
     if (!quartier || !prix) {
       alert('Remplis au moins le quartier et le loyer !');
@@ -338,12 +596,16 @@
 
     const coords = await geocode(quartier);
 
-    const apt = { quartier, prix: parseInt(prix), surface: parseInt(surface), type, note: parseInt(note), remarques, lien };
+    const apt = {
+      quartier, prix: parseInt(prix), surface: parseInt(surface),
+      type, note: parseInt(note), remarques, lien, arrondissement
+    };
     if (coords) { apt.lat = coords.lat; apt.lng = coords.lng; }
 
     await push(ref(db, 'appartements'), apt);
 
     ['lien','quartier','prix','surface','remarques'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('arrondissement').value = '';
     btn.textContent = '📍 Ajouter sur la carte';
     btn.disabled = false;
   };
