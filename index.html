@@ -21,7 +21,6 @@
 
     .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-    /* FORMULAIRE */
     .form-card {
       background: white;
       border-radius: 16px;
@@ -62,14 +61,32 @@
     }
     .btn:hover { opacity: 0.9; }
 
-    /* CARTE */
     #map {
       height: 500px;
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(155,89,182,0.15);
+      margin-bottom: 25px;
     }
 
-    /* LISTE */
+    /* Légende carte */
+    .map-legend {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .map-legend span { font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      display: inline-block;
+      border-radius: 50%;
+      border: 2px solid rgba(0,0,0,0.2);
+    }
+
     .apt-list { margin-top: 25px; display: grid; gap: 12px; }
     .apt-card {
       background: white;
@@ -94,7 +111,14 @@
     }
     .delete-btn:hover { color: #e74c3c; }
 
-    .note-stars { color: #f1c40f; font-size: 1.1em; }
+    .note-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85em;
+      color: white;
+    }
 
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
@@ -109,8 +133,6 @@
 </header>
 
 <div class="container">
-
-  <!-- FORMULAIRE -->
   <div class="form-card">
     <h2>➕ Ajouter un appartement</h2>
     <div class="form-grid">
@@ -120,7 +142,7 @@
       </div>
       <div>
         <label>📍 Quartier / Adresse</label>
-        <input type="text" id="quartier" placeholder="Antigone, Écusson...">
+        <input type="text" id="quartier" placeholder="Noailles, Castellane...">
       </div>
       <div>
         <label>💶 Loyer (€/mois)</label>
@@ -140,29 +162,40 @@
         </select>
       </div>
       <div>
-        <label>⭐ Note</label>
+        <label>⭐ Note (1 à 10)</label>
         <select id="note">
-          <option value="5">⭐⭐⭐⭐⭐ Coup de cœur</option>
-          <option value="4">⭐⭐⭐⭐ Très bien</option>
-          <option value="3" selected>⭐⭐⭐ Bien</option>
-          <option value="2">⭐⭐ Moyen</option>
-          <option value="1">⭐ Bof</option>
+          <option value="10">10 — Coup de cœur absolu 🤩</option>
+          <option value="9">9 — Excellent 😍</option>
+          <option value="8">8 — Très bien 😊</option>
+          <option value="7">7 — Bien 🙂</option>
+          <option value="6" selected>6 — Correct 😐</option>
+          <option value="5">5 — Moyen 😑</option>
+          <option value="4">4 — Pas top 😕</option>
+          <option value="3">3 — Bof 😟</option>
+          <option value="2">2 — Mauvais 😞</option>
+          <option value="1">1 — À éviter 🚫</option>
         </select>
       </div>
       <div class="full">
         <label>💬 Remarques</label>
-        <textarea id="remarques" rows="2" placeholder="Lumineux, proche tram..."></textarea>
+        <textarea id="remarques" rows="2" placeholder="Lumineux, proche métro..."></textarea>
       </div>
     </div>
     <button class="btn" onclick="addApartment()">📍 Ajouter sur la carte</button>
   </div>
 
-  <!-- CARTE -->
   <div id="map"></div>
 
-  <!-- LISTE -->
-  <div class="apt-list" id="apt-list"></div>
+  <!-- Légende -->
+  <div class="map-legend">
+    <strong style="color:#666">Légende :</strong>
+    <span><span class="legend-dot" style="width:12px;height:12px;background:#e74c3c"></span> 1-3 (Bof)</span>
+    <span><span class="legend-dot" style="width:16px;height:16px;background:#e67e22"></span> 4-6 (Moyen)</span>
+    <span><span class="legend-dot" style="width:20px;height:20px;background:#2ecc71"></span> 7-10 (Bien)</span>
+    <span style="color:#aaa;font-size:0.8em">• La taille du cercle reflète la note</span>
+  </div>
 
+  <div class="apt-list" id="apt-list"></div>
 </div>
 
 <script type="module">
@@ -182,42 +215,78 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Carte Leaflet
-  const map = L.map('map').setView([43.6117, 3.8767], 13);
+  // Carte centrée sur Marseille
+  const map = L.map('map').setView([43.2965, 5.3698], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
   const markers = {};
 
-  // Écoute Firebase en temps réel
+  // Couleur et taille selon note /10
+  function getNoteStyle(note) {
+    if (note >= 7) return { color: '#2ecc71', size: 10 + (note - 6) * 3 }; // 13 à 22px
+    if (note >= 4) return { color: '#e67e22', size: 8 + (note - 3) * 2 };  // 10 à 14px
+    return { color: '#e74c3c', size: 6 + note * 1 };                        // 7 à 9px
+  }
+
+  function createNoteIcon(note) {
+    const { color, size } = getNoteStyle(note);
+    const total = size * 2 + 4;
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:${total}px;
+        height:${total}px;
+        background:${color};
+        border-radius:50%;
+        border:3px solid white;
+        box-shadow:0 2px 6px rgba(0,0,0,0.35);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:white;
+        font-weight:bold;
+        font-size:${Math.max(9, size - 2)}px;
+      ">${note}</div>`,
+      iconSize: [total, total],
+      iconAnchor: [total/2, total/2]
+    });
+  }
+
+  function getNoteColor(note) {
+    if (note >= 7) return '#2ecc71';
+    if (note >= 4) return '#e67e22';
+    return '#e74c3c';
+  }
+
   onValue(ref(db, 'appartements'), (snapshot) => {
     const data = snapshot.val();
     
-    // Reset markers et liste
     Object.values(markers).forEach(m => map.removeLayer(m));
     Object.keys(markers).forEach(k => delete markers[k]);
     document.getElementById('apt-list').innerHTML = '';
 
     if (!data) {
-      document.getElementById('subtitle').textContent = '0 appartement • Montpellier';
+      document.getElementById('subtitle').textContent = '0 appartement • Marseille';
       return;
     }
 
     const apts = Object.entries(data);
-    document.getElementById('subtitle').textContent = `${apts.length} appartement${apts.length > 1 ? 's' : ''} • Montpellier`;
+    document.getElementById('subtitle').textContent = `${apts.length} appartement${apts.length > 1 ? 's' : ''} • Marseille`;
 
     apts.forEach(([id, apt]) => {
-      // Marqueur
+      const note = apt.note || 5;
+      const noteColor = getNoteColor(note);
+
       if (apt.lat && apt.lng) {
-        const stars = '⭐'.repeat(apt.note || 3);
-        const marker = L.marker([apt.lat, apt.lng])
+        const marker = L.marker([apt.lat, apt.lng], { icon: createNoteIcon(note) })
           .addTo(map)
           .bindPopup(`
             <div style="min-width:200px">
               <strong style="color:#9b59b6">${apt.quartier}</strong><br>
               <span style="color:#e91e8c;font-weight:bold">${apt.prix}€/mois</span> — ${apt.surface}m² — ${apt.type}<br>
-              ${stars}<br>
+              <span style="background:${noteColor};color:white;padding:2px 8px;border-radius:20px;font-weight:bold;font-size:0.9em">Note : ${note}/10</span><br><br>
               ${apt.remarques ? `<em>${apt.remarques}</em><br>` : ''}
               ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
             </div>
@@ -225,14 +294,13 @@
         markers[id] = marker;
       }
 
-      // Carte liste
       const card = document.createElement('div');
       card.className = 'apt-card';
       card.innerHTML = `
         <div>
           <h3>${apt.quartier} — ${apt.type}</h3>
           <div class="price">${apt.prix}€/mois</div>
-          <div class="details">${apt.surface}m² • ${'⭐'.repeat(apt.note || 3)}</div>
+          <div class="details">${apt.surface}m² • <span class="note-badge" style="background:${noteColor}">${note}/10</span></div>
           ${apt.remarques ? `<div class="details">${apt.remarques}</div>` : ''}
           ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
         </div>
@@ -242,16 +310,14 @@
     });
   });
 
-  // Géocoder le quartier → coordonnées
   async function geocode(quartier) {
-    const q = encodeURIComponent(quartier + ', Montpellier, France');
+    const q = encodeURIComponent(quartier + ', Marseille, France');
     const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`);
     const data = await res.json();
     if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     return null;
   }
 
-  // Ajouter un appartement
   window.addApartment = async function() {
     const quartier = document.getElementById('quartier').value.trim();
     const prix = document.getElementById('prix').value;
@@ -277,13 +343,11 @@
 
     await push(ref(db, 'appartements'), apt);
 
-    // Reset form
     ['lien','quartier','prix','surface','remarques'].forEach(id => document.getElementById(id).value = '');
     btn.textContent = '📍 Ajouter sur la carte';
     btn.disabled = false;
   };
 
-  // Supprimer
   window.deleteApt = function(id) {
     if (confirm('Supprimer cet appartement ?')) {
       remove(ref(db, `appartements/${id}`));
