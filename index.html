@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏠 Recherche Appart Léa</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8f4ff; }
+    
+    header {
+      background: linear-gradient(135deg, #9b59b6, #e91e8c);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.8em; }
+    header p { opacity: 0.85; margin-top: 5px; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    /* FORMULAIRE */
+    .form-card {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 20px rgba(155,89,182,0.1);
+    }
+    .form-card h2 { color: #9b59b6; margin-bottom: 15px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e8d5f5;
+      border-radius: 10px;
+      font-size: 0.95em;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #9b59b6; }
+    label { display: block; margin-bottom: 4px; color: #666; font-size: 0.85em; font-weight: 600; }
+    
+    .btn {
+      background: linear-gradient(135deg, #9b59b6, #e91e8c);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+
+    /* CARTE */
+    #map {
+      height: 500px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(155,89,182,0.15);
+    }
+
+    /* LISTE */
+    .apt-list { margin-top: 25px; display: grid; gap: 12px; }
+    .apt-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .apt-card h3 { color: #9b59b6; margin-bottom: 4px; }
+    .apt-card .price { color: #e91e8c; font-weight: bold; }
+    .apt-card .details { color: #888; font-size: 0.85em; }
+    .apt-card a { color: #9b59b6; font-size: 0.85em; }
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2em;
+      color: #ccc;
+      transition: color 0.2s;
+    }
+    .delete-btn:hover { color: #e74c3c; }
+
+    .note-stars { color: #f1c40f; font-size: 1.1em; }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 Recherche Appart Léa</h1>
+  <p id="subtitle">Chargement...</p>
+</header>
+
+<div class="container">
+
+  <!-- FORMULAIRE -->
+  <div class="form-card">
+    <h2>➕ Ajouter un appartement</h2>
+    <div class="form-grid">
+      <div class="full">
+        <label>🔗 Lien de l'annonce</label>
+        <input type="url" id="lien" placeholder="https://www.seloger.com/...">
+      </div>
+      <div>
+        <label>📍 Quartier / Adresse</label>
+        <input type="text" id="quartier" placeholder="Antigone, Écusson...">
+      </div>
+      <div>
+        <label>💶 Loyer (€/mois)</label>
+        <input type="number" id="prix" placeholder="750">
+      </div>
+      <div>
+        <label>📐 Surface (m²)</label>
+        <input type="number" id="surface" placeholder="35">
+      </div>
+      <div>
+        <label>🏠 Type</label>
+        <select id="type">
+          <option>Studio</option>
+          <option>T1</option>
+          <option>T2</option>
+          <option>T3</option>
+        </select>
+      </div>
+      <div>
+        <label>⭐ Note</label>
+        <select id="note">
+          <option value="5">⭐⭐⭐⭐⭐ Coup de cœur</option>
+          <option value="4">⭐⭐⭐⭐ Très bien</option>
+          <option value="3" selected>⭐⭐⭐ Bien</option>
+          <option value="2">⭐⭐ Moyen</option>
+          <option value="1">⭐ Bof</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>💬 Remarques</label>
+        <textarea id="remarques" rows="2" placeholder="Lumineux, proche tram..."></textarea>
+      </div>
+    </div>
+    <button class="btn" onclick="addApartment()">📍 Ajouter sur la carte</button>
+  </div>
+
+  <!-- CARTE -->
+  <div id="map"></div>
+
+  <!-- LISTE -->
+  <div class="apt-list" id="apt-list"></div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyANr-PJKyfkoW9a58Dx3SQm7bf4I_E-c9E",
+    authDomain: "appart-lea.firebaseapp.com",
+    databaseURL: "https://appart-lea-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "appart-lea",
+    storageBucket: "appart-lea.firebasestorage.app",
+    messagingSenderId: "613101805115",
+    appId: "1:613101805115:web:430612b23752068460061e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Carte Leaflet
+  const map = L.map('map').setView([43.6117, 3.8767], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const markers = {};
+
+  // Écoute Firebase en temps réel
+  onValue(ref(db, 'appartements'), (snapshot) => {
+    const data = snapshot.val();
+    
+    // Reset markers et liste
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    Object.keys(markers).forEach(k => delete markers[k]);
+    document.getElementById('apt-list').innerHTML = '';
+
+    if (!data) {
+      document.getElementById('subtitle').textContent = '0 appartement • Montpellier';
+      return;
+    }
+
+    const apts = Object.entries(data);
+    document.getElementById('subtitle').textContent = `${apts.length} appartement${apts.length > 1 ? 's' : ''} • Montpellier`;
+
+    apts.forEach(([id, apt]) => {
+      // Marqueur
+      if (apt.lat && apt.lng) {
+        const stars = '⭐'.repeat(apt.note || 3);
+        const marker = L.marker([apt.lat, apt.lng])
+          .addTo(map)
+          .bindPopup(`
+            <div style="min-width:200px">
+              <strong style="color:#9b59b6">${apt.quartier}</strong><br>
+              <span style="color:#e91e8c;font-weight:bold">${apt.prix}€/mois</span> — ${apt.surface}m² — ${apt.type}<br>
+              ${stars}<br>
+              ${apt.remarques ? `<em>${apt.remarques}</em><br>` : ''}
+              ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
+            </div>
+          `);
+        markers[id] = marker;
+      }
+
+      // Carte liste
+      const card = document.createElement('div');
+      card.className = 'apt-card';
+      card.innerHTML = `
+        <div>
+          <h3>${apt.quartier} — ${apt.type}</h3>
+          <div class="price">${apt.prix}€/mois</div>
+          <div class="details">${apt.surface}m² • ${'⭐'.repeat(apt.note || 3)}</div>
+          ${apt.remarques ? `<div class="details">${apt.remarques}</div>` : ''}
+          ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
+        </div>
+        <button class="delete-btn" onclick="window.deleteApt('${id}')">🗑️</button>
+      `;
+      document.getElementById('apt-list').appendChild(card);
+    });
+  });
+
+  // Géocoder le quartier → coordonnées
+  async function geocode(quartier) {
+    const q = encodeURIComponent(quartier + ', Montpellier, France');
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`);
+    const data = await res.json();
+    if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    return null;
+  }
+
+  // Ajouter un appartement
+  window.addApartment = async function() {
+    const quartier = document.getElementById('quartier').value.trim();
+    const prix = document.getElementById('prix').value;
+    const surface = document.getElementById('surface').value;
+    const type = document.getElementById('type').value;
+    const note = document.getElementById('note').value;
+    const remarques = document.getElementById('remarques').value.trim();
+    const lien = document.getElementById('lien').value.trim();
+
+    if (!quartier || !prix) {
+      alert('Remplis au moins le quartier et le loyer !');
+      return;
+    }
+
+    const btn = document.querySelector('.btn');
+    btn.textContent = '⏳ Géolocalisation...';
+    btn.disabled = true;
+
+    const coords = await geocode(quartier);
+
+    const apt = { quartier, prix: parseInt(prix), surface: parseInt(surface), type, note: parseInt(note), remarques, lien };
+    if (coords) { apt.lat = coords.lat; apt.lng = coords.lng; }
+
+    await push(ref(db, 'appartements'), apt);
+
+    // Reset form
+    ['lien','quartier','prix','surface','remarques'].forEach(id => document.getElementById(id).value = '');
+    btn.textContent = '📍 Ajouter sur la carte';
+    btn.disabled = false;
+  };
+
+  // Supprimer
+  window.deleteApt = function(id) {
+    if (confirm('Supprimer cet appartement ?')) {
+      remove(ref(db, `appartements/${id}`));
+    }
+  };
+</script>
+
+</body>
+</html>
