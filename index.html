@@ -137,6 +137,20 @@
       transition: opacity 0.2s;
     }
     .btn:hover { opacity: 0.9; }
+    .btn-geocode {
+      background: #e67e22;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+    .btn-geocode:hover { opacity: 0.9; }
+    .btn-geocode:disabled { opacity: 0.6; cursor: not-allowed; }
 
     #map {
       height: 450px;
@@ -332,6 +346,7 @@
         </div>
       </div>
       <button class="btn" onclick="addApartment()">📍 Ajouter sur la carte</button>
+      <button class="btn-geocode" id="btn-geocode" onclick="geocodeAll()">🌍 Géocoder tous les apparts existants</button>
     </div>
 
     <div id="map"></div>
@@ -362,7 +377,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, push, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANr-PJKyfkoW9a58Dx3SQm7bf4I_E-c9E",
@@ -416,7 +431,6 @@
     return '#e74c3c';
   }
 
-  // ✅ Lecture depuis 'apparts'
   onValue(ref(db, 'apparts'), (snapshot) => {
     const data = snapshot.val();
     allApartments = data
@@ -459,11 +473,9 @@
     const checkedArr = getCheckedArrondissements();
 
     const filtered = allApartments.filter(apt => {
-      // ✅ Compatible loyer ET prix (anciennes données)
       const loyer = apt.loyer || apt.prix || 0;
       if (loyer > maxPrix) return false;
       if (apt.surface && apt.surface < minSurface) return false;
-      // ✅ Si pas de note, on ne filtre pas
       if (apt.note && apt.note < minNote) return false;
       if (checkedArr.length > 0 && apt.arrondissement && !checkedArr.includes(apt.arrondissement)) return false;
       return true;
@@ -596,13 +608,37 @@
     };
     if (coords) { apt.lat = coords.lat; apt.lng = coords.lng; }
 
-    // ✅ Sauvegarde dans 'apparts'
     await push(ref(db, 'apparts'), apt);
 
     ['lien','quartier','loyer','surface','remarques'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('arrondissement').value = '';
     btn.textContent = '📍 Ajouter sur la carte';
     btn.disabled = false;
+  };
+
+  window.geocodeAll = async function() {
+    const btn = document.getElementById('btn-geocode');
+    btn.disabled = true;
+    btn.textContent = '⏳ En cours...';
+
+    let count = 0;
+    for (const apt of allApartments) {
+      if (!apt.lat || !apt.lng) {
+        const coords = await geocode(apt.quartier);
+        if (coords) {
+          await update(ref(db, `apparts/${apt.id}`), { lat: coords.lat, lng: coords.lng });
+          count++;
+          btn.textContent = `⏳ ${count} géocodés...`;
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+
+    btn.textContent = `✅ ${count} apparts géocodés !`;
+    setTimeout(() => {
+      btn.textContent = '🌍 Géocoder tous les apparts existants';
+      btn.disabled = false;
+    }, 3000);
   };
 
   window.deleteApt = function(id) {
