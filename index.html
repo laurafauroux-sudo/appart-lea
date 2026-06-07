@@ -9,7 +9,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8f4ff; }
-    
+
     header {
       background: linear-gradient(135deg, #9b59b6, #e91e8c);
       color: white;
@@ -24,7 +24,6 @@
       min-height: calc(100vh - 80px);
     }
 
-    /* PANNEAU FILTRES */
     .filter-panel {
       width: 260px;
       min-width: 260px;
@@ -100,7 +99,6 @@
     }
     .btn-reset:hover { background: #e0ccff; }
 
-    /* CONTENU */
     .content {
       flex: 1;
       padding: 20px;
@@ -153,7 +151,6 @@
       box-shadow: 0 4px 20px rgba(155,89,182,0.15);
     }
 
-    /* LÉGENDE */
     .legende {
       display: flex;
       gap: 15px;
@@ -291,7 +288,7 @@
         </div>
         <div>
           <label>💶 Loyer (€/mois)</label>
-          <input type="number" id="prix" placeholder="700">
+          <input type="number" id="loyer" placeholder="700">
         </div>
         <div>
           <label>📐 Surface (m²)</label>
@@ -369,6 +366,9 @@
       <div class="legende-item">
         <span class="legende-dot" style="width:20px;height:20px;background:#2ecc71"></span> Note 8-10
       </div>
+      <div class="legende-item">
+        <span class="legende-dot" style="width:14px;height:14px;background:#9b59b6"></span> Sans note
+      </div>
     </div>
 
     <!-- LISTE -->
@@ -403,12 +403,12 @@
   const markers = {};
   let allApartments = [];
 
-  // Couleur et taille du pin selon la note /10
   function getPinStyle(note) {
-    if (note >= 8) return { color: '#2ecc71', size: 22 };      // vert grand
-    if (note >= 6) return { color: '#f1c40f', size: 17 };      // jaune moyen
-    if (note >= 4) return { color: '#e67e22', size: 13 };      // orange petit
-    return          { color: '#e74c3c', size: 10 };             // rouge très petit
+    if (note === null || note === undefined) return { color: '#9b59b6', size: 14 }; // violet = sans note
+    if (note >= 8) return { color: '#2ecc71', size: 22 };
+    if (note >= 6) return { color: '#f1c40f', size: 17 };
+    if (note >= 4) return { color: '#e67e22', size: 13 };
+    return          { color: '#e74c3c', size: 10 };
   }
 
   function createPinIcon(note) {
@@ -429,14 +429,15 @@
   }
 
   function getNoteColor(note) {
+    if (note === null || note === undefined) return '#9b59b6';
     if (note >= 8) return '#2ecc71';
     if (note >= 6) return '#f1c40f';
     if (note >= 4) return '#e67e22';
     return '#e74c3c';
   }
 
-  // Écoute Firebase
-  onValue(ref(db, 'appartements'), (snapshot) => {
+  // ✅ ICI : 'apparts' au lieu de 'appartements'
+  onValue(ref(db, 'apparts'), (snapshot) => {
     const data = snapshot.val();
     allApartments = data
       ? Object.entries(data).map(([id, apt]) => ({ id, ...apt }))
@@ -452,7 +453,7 @@
 
     const list = document.getElementById('arrondissements-list');
     if (arrondissements.length === 0) {
-      list.innerHTML = '<div style="color:#bbb; font-size:0.85em">Aucun appart ajouté</div>';
+      list.innerHTML = '<div style="color:#bbb; font-size:0.85em">Aucun arrondissement renseigné</div>';
       return;
     }
     const currentChecked = getCheckedArrondissements();
@@ -472,15 +473,17 @@
   }
 
   window.applyFilters = function() {
-    const maxPrix    = parseInt(document.getElementById('filter-prix').value);
+    const maxLoyer   = parseInt(document.getElementById('filter-prix').value);
     const minSurface = parseInt(document.getElementById('filter-surface').value);
     const minNote    = parseInt(document.getElementById('filter-note').value);
     const checkedArr = getCheckedArrondissements();
 
     const filtered = allApartments.filter(apt => {
-      if (apt.prix > maxPrix) return false;
-      if (apt.surface < minSurface) return false;
-      if ((apt.note || 0) < minNote) return false;
+      // ✅ loyer au lieu de prix
+      if ((apt.loyer || 0) > maxLoyer) return false;
+      if ((apt.surface || 0) < minSurface) return false;
+      // ✅ les apparts sans note ne sont pas filtrés sauf si filtre > 1
+      if (apt.note !== undefined && apt.note !== null && apt.note < minNote) return false;
       if (checkedArr.length > 0 && apt.arrondissement && !checkedArr.includes(apt.arrondissement)) return false;
       return true;
     });
@@ -498,7 +501,7 @@
 
     apartments.forEach(apt => {
       if (apt.lat && apt.lng) {
-        const note = apt.note || 5;
+        const note = apt.note ?? null;
         const icon = createPinIcon(note);
         const marker = L.marker([apt.lat, apt.lng], { icon })
           .addTo(map)
@@ -506,10 +509,9 @@
             <div style="min-width:200px">
               <strong style="color:#9b59b6">${apt.quartier}</strong>
               ${apt.arrondissement ? ` <span style="color:#aaa;font-size:0.85em">(${apt.arrondissement})</span>` : ''}<br>
-              <span style="color:#e91e8c;font-weight:bold">${apt.prix}€/mois</span> — ${apt.surface}m² — ${apt.type}<br>
-              <span style="background:${getNoteColor(note)};color:white;padding:2px 8px;border-radius:10px;font-size:0.85em;font-weight:bold">
-                ⭐ ${note}/10
-              </span><br><br>
+              <span style="color:#e91e8c;font-weight:bold">${apt.loyer}€/mois</span> — ${apt.surface}m² — ${apt.type}<br>
+              ${note !== null ? `<span style="background:${getNoteColor(note)};color:white;padding:2px 8px;border-radius:10px;font-size:0.85em;font-weight:bold">⭐ ${note}/10</span><br>` : ''}
+              <br>
               ${apt.remarques ? `<em>${apt.remarques}</em><br>` : ''}
               ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
             </div>
@@ -529,17 +531,17 @@
     }
 
     apartments.forEach(apt => {
-      const note = apt.note || 5;
+      const note = apt.note ?? null;
       const color = getNoteColor(note);
       const card = document.createElement('div');
       card.className = 'apt-card';
       card.innerHTML = `
         <div>
           <h3>
-            ${apt.quartier} — ${apt.type}
-            <span class="note-badge" style="background:${color}">⭐ ${note}/10</span>
+            ${apt.quartier} — ${apt.type || ''}
+            ${note !== null ? `<span class="note-badge" style="background:${color}">⭐ ${note}/10</span>` : ''}
           </h3>
-          <div class="price">${apt.prix}€/mois</div>
+          <div class="price">${apt.loyer}€/mois</div>
           <div class="details">${apt.surface}m²${apt.arrondissement ? ` • 📍 ${apt.arrondissement}` : ''}</div>
           ${apt.remarques ? `<div class="details">${apt.remarques}</div>` : ''}
           ${apt.lien ? `<a href="${apt.lien}" target="_blank">🔗 Voir l'annonce</a>` : ''}
@@ -576,16 +578,16 @@
   }
 
   window.addApartment = async function() {
-    const quartier      = document.getElementById('quartier').value.trim();
-    const prix          = document.getElementById('prix').value;
-    const surface       = document.getElementById('surface').value;
-    const type          = document.getElementById('type').value;
-    const note          = document.getElementById('note').value;
-    const remarques     = document.getElementById('remarques').value.trim();
-    const lien          = document.getElementById('lien').value.trim();
+    const quartier       = document.getElementById('quartier').value.trim();
+    const loyer          = document.getElementById('loyer').value;  // ✅ loyer
+    const surface        = document.getElementById('surface').value;
+    const type           = document.getElementById('type').value;
+    const note           = document.getElementById('note').value;
+    const remarques      = document.getElementById('remarques').value.trim();
+    const lien           = document.getElementById('lien').value.trim();
     const arrondissement = document.getElementById('arrondissement').value;
 
-    if (!quartier || !prix) {
+    if (!quartier || !loyer) {
       alert('Remplis au moins le quartier et le loyer !');
       return;
     }
@@ -596,15 +598,22 @@
 
     const coords = await geocode(quartier);
 
+    // ✅ loyer au lieu de prix, sauvegarde dans 'apparts'
     const apt = {
-      quartier, prix: parseInt(prix), surface: parseInt(surface),
-      type, note: parseInt(note), remarques, lien, arrondissement
+      quartier,
+      loyer: parseInt(loyer),
+      surface: parseInt(surface),
+      type,
+      note: parseInt(note),
+      remarques,
+      lien,
+      arrondissement
     };
     if (coords) { apt.lat = coords.lat; apt.lng = coords.lng; }
 
-    await push(ref(db, 'appartements'), apt);
+    await push(ref(db, 'apparts'), apt); // ✅ apparts
 
-    ['lien','quartier','prix','surface','remarques'].forEach(id => document.getElementById(id).value = '');
+    ['lien','quartier','loyer','surface','remarques'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('arrondissement').value = '';
     btn.textContent = '📍 Ajouter sur la carte';
     btn.disabled = false;
@@ -612,7 +621,7 @@
 
   window.deleteApt = function(id) {
     if (confirm('Supprimer cet appartement ?')) {
-      remove(ref(db, `appartements/${id}`));
+      remove(ref(db, `apparts/${id}`)); // ✅ apparts
     }
   };
 </script>
